@@ -62,6 +62,7 @@ MIA_OP_UMOUNT             := $91
 MIA_OP_TAP_SEEK           := $92
 MIA_OP_TAP_TELL           := $93
 MIA_OP_TAP_HDR            := $94
+MIA_OP_SYS_UNAME          := $98
 MIA_OP_BOOT               := $A0
 MIA_OP_TUNE_TMAP          := $A1
 MIA_OP_TUNE_TIOR          := $A2
