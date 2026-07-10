@@ -1187,7 +1187,11 @@ void main(void){
 
     while(1){
         char kb;
-        unsigned char key = ReadKeyNoBounce();
+        unsigned char key;
+        key = ReadKeyNoBounce();
+        if(key && tui_get_type(tui_get_current()) == TUI_INP){ 
+            key = ReadKey();
+        }
         key = Mouse(key);
         if(key)
             DisplayKey(key);
