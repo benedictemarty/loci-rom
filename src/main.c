@@ -984,8 +984,20 @@ void DisplayKey(unsigned char key)
                             sprintf(&txt_tior[5],"%02d",auto_tune_tior());
                             tui_draw_widget(IDX_TIOR);
                             break;
+                        case('w'):
+                            /* loci-webdisk: monte le champ path (URL http://) en
+                             * lecteur A. mount() recolle path + '/' + filename,
+                             * donc on scinde l'URL sur son dernier '/'. */
+                            tmp_ptr = strrchr(loci_cfg.path,'/');
+                            if(tmp_ptr){
+                                *tmp_ptr = '\0';
+                                if(mount(0,loci_cfg.path,tmp_ptr+1)==0)
+                                    loci_cfg.mounts |= 1u;
+                                *tmp_ptr = '/';
+                            }
+                            break;
                     }
-                }else{  
+                }else{
                     //Directory popup keyboard shortcuts
                     if(dir_ok){
                         switch(key){
