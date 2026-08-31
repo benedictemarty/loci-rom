@@ -40,6 +40,11 @@
 #define MATH_FLOG       0x25
 #define MATH_FEXP       0x26
 #define MATH_FPOW       0x27
+#define MATH_MBF_TO_IEEE 0x30
+#define MATH_IEEE_TO_MBF 0x31
+#define MATH_VEC_DOT     0x40
+#define MATH_VEC_SCALE   0x41
+#define MATH_POLY_EVAL   0x42
 
 /* ---- Entiers : produit (retour scalaire AX:SREG) ---- */
 static unsigned long loci_mul_u16(unsigned a, unsigned b) {
@@ -115,6 +120,41 @@ static long loci_ftoi(unsigned long fbits) {
     mia_push_long(fbits);
     mia_set_a(MATH_FTOI);
     return mia_call_long(MIA_OP_MATH);
+}
+
+/* ---- Pont MBF (5 octets) <-> IEEE754 (bits u32) ----
+ * MBF : out[0]=exposant (au sommet du xstack), out[1..4]=mantisse. */
+static unsigned long loci_mbf_to_ieee(const unsigned char mbf[5]) {
+    /* pousser mbf[4]..mbf[0] pour que mbf[0] (exp) soit au sommet */
+    mia_push_char(mbf[4]); mia_push_char(mbf[3]); mia_push_char(mbf[2]);
+    mia_push_char(mbf[1]); mia_push_char(mbf[0]);
+    mia_set_a(MATH_MBF_TO_IEEE);
+    return (unsigned long)mia_call_long(MIA_OP_MATH);
+}
+static void loci_ieee_to_mbf(unsigned long fbits, unsigned char out[5]) {
+    mia_push_long(fbits);
+    mia_set_a(MATH_IEEE_TO_MBF);
+    mia_call_void(MIA_OP_MATH);
+    /* 5 octets sur le xstack, exposant (out[0]) au sommet -> dépilé en 1er */
+    out[0] = mia_pop_char(); out[1] = mia_pop_char(); out[2] = mia_pop_char();
+    out[3] = mia_pop_char(); out[4] = mia_pop_char();
+}
+
+/* ---- Ops par bloc sur vecteurs f32 en XRAM (pointeurs = offsets XRAM) ---- */
+static unsigned long loci_vec_dot(unsigned ptrA, unsigned ptrB, unsigned count) {
+    mia_push_int(ptrA); mia_push_int(ptrB); mia_push_int(count);
+    mia_set_a(MATH_VEC_DOT);
+    return (unsigned long)mia_call_long(MIA_OP_MATH);
+}
+static void loci_vec_scale(unsigned ptr, unsigned count, unsigned long a_bits) {
+    mia_push_int(ptr); mia_push_int(count); mia_push_long(a_bits);
+    mia_set_a(MATH_VEC_SCALE);
+    mia_call_void(MIA_OP_MATH);
+}
+static unsigned long loci_poly_eval(unsigned ptr, unsigned degree, unsigned long x_bits) {
+    mia_push_int(ptr); mia_push_int(degree); mia_push_long(x_bits);
+    mia_set_a(MATH_POLY_EVAL);
+    return (unsigned long)mia_call_long(MIA_OP_MATH);
 }
 
 #endif /* _LOCI_MATH_H */
