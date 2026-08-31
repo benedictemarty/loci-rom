@@ -166,6 +166,7 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_TUNE_TIOD 0xA4
 #define MIA_OP_TUNE_TADR 0xA5
 #define MIA_OP_TUNE_SCAN 0xA6
+#define MIA_OP_MATH 0xA9 /* Coprocesseur arithmetique : sous-code dans A, operandes xstack */
 
 /* C API for the operating system. */
 
