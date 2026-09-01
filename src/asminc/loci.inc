@@ -70,6 +70,8 @@ MIA_OP_TUNE_TIOW          := $A3
 MIA_OP_TUNE_TIOD          := $A4
 MIA_OP_TUNE_TADR          := $A5
 MIA_OP_TUNE_SCAN          := $A6
+MIA_OP_SET_BANK           := $A7
+MIA_OP_STREAM_BANK        := $A8
 
 ; 6522 VIA
 VIA             := $0300        ; VIA base address
