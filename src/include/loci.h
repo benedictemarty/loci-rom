@@ -168,6 +168,7 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_TUNE_SCAN 0xA6
 #define MIA_OP_SET_BANK 0xA7    /* banking : A = bit7 EN | bits3:0 SEL (overlay $C000-$FFFF) */
 #define MIA_OP_STREAM_BANK 0xA8 /* streamer read-only fichier -> banque 16 Ko (voir loci_stream.h) */
+#define MIA_OP_NET_CONTROL 0xB7 /* device reseau N: : etat d'une transaction (voir loci_net.h) */
 
 /* C API for the operating system. */
 
