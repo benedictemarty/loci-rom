@@ -1,2 +1,8 @@
 src/*.o
 src/libsrc/*.o
+src/.asm_check
+src/loci.lib
+src/locirom
+src/locirom.map
+src/locirom.rp6502
+src/loci.rom
