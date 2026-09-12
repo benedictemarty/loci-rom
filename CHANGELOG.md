@@ -2,6 +2,20 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/).
 
+## [Non publié] — 2026-09-13 : façade `loci_fs` (fs-posix) + `mkdir` corrigé
+
+- `include/loci_fs.h` + `libsrc/loci_fs.c` : `loci_stat` (structure identique à `f_stat_t` de
+  rp6502.h, 282 octets), `loci_chdir`, `loci_getfree` (free, total en unités ; rend csize),
+  `loci_syncfs` — opcodes `$1F/$84/$85/$1E` (firmware `feature/fs-posix`). `loci.h` : les
+  quatre `MIA_OP_*`.
+- **`libsrc/mkdir.s`** : `mkdir()` de `loci.lib` ne marchait pas — cc65 déclare `mkdir`
+  **variadique** (arguments sur la pile C, Y = taille) et son `mkdir.s` commun appelle
+  `__sysmkdir` avec cette convention, alors que `sysmkdir.c` est `__fastcall__` (nom attendu en
+  A/X) : le nom était du bruit → `ENODEV` systématique. Même recette que cc65
+  `libsrc/rp6502/mkdir.s` (jeter les variadiques, `popax`, appel fastcall).
+- Validé par `extensions/fs-posix/tests/oric/fstest` (programme 6502 en co-simulation :
+  `FSTEST OK`, `mkdir` inclus).
+
 ## [Non publié] — 2026-09-10 : façade cc65 du device réseau `N:` (`$B7`)
 
 `include/loci_net.h` + `libsrc/loci_net.c` : une URL s'ouvre, se lit et se ferme comme un
