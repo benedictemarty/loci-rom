@@ -2,6 +2,14 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/).
 
+## [Non publié] — 2026-09-13 : façade réseau `N:` en écriture (lot 2)
+
+- `include/loci_net.h` + `libsrc/loci_net.c` : `loci_net_open_write(n, url)` (`open` `O_WRONLY`,
+  routage `N:` côté firmware), `loci_net_write(n, xaddr, len)` (`$19 write_xram`, corps ≤ 2 Ko),
+  `LOCI_NET_ST_WBUF`. Le PUT part au `loci_net_close()` ; attendre `LOCI_NET_ST_EOF` via
+  `loci_net_status()` (`http` = code de réponse). Exercé par
+  `extensions/net-device-B7/tests/oric/netput.c` (co-sim, 300 octets identiques après PUT+GET).
+
 ## [Non publié] — 2026-09-13 : save-state `$B0` (touches `n`/`l`) — ROM pleine, factorisations
 
 - `src/snapshot.s` (+ `snapshot.h`) : `snapshot_save()` / `snapshot_load()` en **assembleur**

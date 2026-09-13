@@ -56,6 +56,7 @@ typedef struct {
 #define LOCI_NET_ST_RECV 2
 #define LOCI_NET_ST_EOF  3
 #define LOCI_NET_ST_ERR  4
+#define LOCI_NET_ST_WBUF 5   /* ouvert en écriture, corps en cours d'accumulation */
 
 /* Ouvre une URL en lecture. `url` commence par « N: » suivi du schéma
  * (`http://`, `https://`). Renvoie 0 si la transaction est armée, -1 sinon
@@ -78,6 +79,18 @@ int __fastcall__ loci_net_open(loci_net_t *n, const char *url);
  * donc comme un appel qui dure, pas comme une lecture vide à réessayer. */
 int __fastcall__ loci_net_read(loci_net_t *n, unsigned int xaddr,
                                unsigned int len);
+
+/* Ouvre une URL en ÉCRITURE (PUT binaire via la commande `ATDISKWR` du dongle).
+ * Le corps s'accumule avec loci_net_write() (au plus 2 Ko) ; il part au
+ * loci_net_close(), qui rend la main aussitôt : interroger loci_net_status()
+ * jusqu'à LOCI_NET_ST_EOF (http = code de réponse) ou LOCI_NET_ST_ERR. Le canal
+ * est libéré par le loci_net_open() suivant. Renvoie 0, -1 sinon (errno). */
+int __fastcall__ loci_net_open_write(loci_net_t *n, const char *url);
+
+/* Ajoute `len` octets pris en XRAM `xaddr` au corps du PUT. Renvoie le nombre
+ * d'octets acceptés, -1 sinon (ENOSPC : corps > 2 Ko). */
+int __fastcall__ loci_net_write(loci_net_t *n, unsigned int xaddr,
+                                unsigned int len);
 
 /* Lit l'état de la transaction (code HTTP, avancement, octets disponibles).
  * Renvoie 0 si OK, -1 sinon.

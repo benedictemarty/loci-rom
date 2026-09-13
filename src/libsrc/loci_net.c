@@ -30,6 +30,24 @@ int __fastcall__ loci_net_read(loci_net_t *n, unsigned int xaddr,
     return mia_call_int_errno(MIA_OP_READ_XRAM);
 }
 
+int __fastcall__ loci_net_open_write(loci_net_t *n, const char *url)
+{
+    n->fd = open(url, O_WRONLY);      /* routage « N: » + mode écriture côté firmware */
+    return (n->fd < 0) ? -1 : 0;
+}
+
+int __fastcall__ loci_net_write(loci_net_t *n, unsigned int xaddr,
+                                unsigned int len)
+{
+    if (n->fd < 0)
+        return -1;
+    /* Même ordre de push que write_xram() : buf, count, puis fd dans A. */
+    mia_push_int(xaddr);
+    mia_push_int(len);
+    mia_set_ax(n->fd);
+    return mia_call_int_errno(MIA_OP_WRITE_XRAM);
+}
+
 int __fastcall__ loci_net_status(loci_net_status_t *st)
 {
     int r;
