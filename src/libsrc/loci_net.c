@@ -54,6 +54,27 @@ int __fastcall__ loci_net_open_tcp(loci_net_t *n, const char *url)
     return (n->fd < 0) ? -1 : 0;
 }
 
+int __fastcall__ loci_net_json(const char *path, char *out, unsigned char cap)
+{
+    int r, i;
+    unsigned char n;
+    /* Chaîne sur le xstack comme un chemin de fichier : dernier caractère poussé
+     * en premier, pour que xstack[xstack_ptr] soit le 1er caractère. */
+    n = 0;
+    while (path[n]) ++n;
+    mia_call_void(MIA_OP_ZXSTACK);
+    for (i = n - 1; i >= 0; --i)
+        mia_push_char(path[i]);
+    mia_set_ax(LOCI_NET_JSON);
+    r = mia_call_int_errno(MIA_OP_NET_CONTROL);
+    if (r < 0)
+        return -1;
+    for (i = 0; i < r && i < (int)cap - 1; ++i)
+        out[i] = mia_pop_char();
+    out[i] = 0;
+    return r;
+}
+
 int __fastcall__ loci_net_status(loci_net_status_t *st)
 {
     int r;

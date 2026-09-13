@@ -4,6 +4,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Non publié] — 2026-09-13 : façade réseau `N:` en écriture (lot 2) et flux `tcp://` (lot 3)
 
+- `loci_net_json(path, out, cap)` (`$B7` A=4) : extrait un champ (« a.b[2].c ») du corps JSON
+  non lu, sans parser côté 6502. Exercé par `net-device-B7/tests/oric/netjson.c`.
 - `loci_net_open_tcp(n, url)` (`open` `O_RDWR` sur « N:tcp://hôte:port » / « N:telnet:// »),
   états `LOCI_NET_ST_DIAL/STREAM/HANGUP` ; lecture guidée par `loci_net_status().avail`,
   écriture directe, fin distante = read 0. Exercé par `net-device-B7/tests/oric/nettcp.c`.

@@ -43,6 +43,7 @@ typedef struct {
 
 /* Sous-fonctions de `MIA_OP_NET_CONTROL` ($B7). */
 #define LOCI_NET_STATUS 0x00
+#define LOCI_NET_JSON   0x04
 
 /* État d'une transaction, tel que le rapporte le firmware. */
 typedef struct {
@@ -103,6 +104,13 @@ int __fastcall__ loci_net_write(loci_net_t *n, unsigned int xaddr,
  * loci_net_close() raccroche en fond (+++ puis ATH, ~2,5 s) : le canal reste
  * tenu jusque-là (EMFILE à un open trop tôt). Renvoie 0, -1 sinon (errno). */
 int __fastcall__ loci_net_open_tcp(loci_net_t *n, const char *url);
+
+/* Extrait un champ du corps JSON d'une réponse GET encore NON LUE (≤ 2 Ko, de
+ * préférence après LOCI_NET_ST_EOF) : `path` = « a.b[2].c ». Copie la valeur dans
+ * `out` (au plus cap-1 caractères, terminée par 0) : chaîne sans guillemets,
+ * nombre/true/false/null tels quels, objet/tableau = texte brut. Renvoie la
+ * longueur, -1 sinon (ENOENT : absent ; EINVAL : pas un JSON). Non destructif. */
+int __fastcall__ loci_net_json(const char *path, char *out, unsigned char cap);
 
 /* Lit l'état de la transaction (code HTTP, avancement, octets disponibles).
  * Renvoie 0 si OK, -1 sinon.
