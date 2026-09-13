@@ -48,6 +48,12 @@ int __fastcall__ loci_net_write(loci_net_t *n, unsigned int xaddr,
     return mia_call_int_errno(MIA_OP_WRITE_XRAM);
 }
 
+int __fastcall__ loci_net_open_tcp(loci_net_t *n, const char *url)
+{
+    n->fd = open(url, O_RDWR);        /* flux bidirectionnel ; « N:tcp:// » routé par le firmware */
+    return (n->fd < 0) ? -1 : 0;
+}
+
 int __fastcall__ loci_net_status(loci_net_status_t *st)
 {
     int r;

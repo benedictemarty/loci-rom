@@ -57,6 +57,9 @@ typedef struct {
 #define LOCI_NET_ST_EOF  3
 #define LOCI_NET_ST_ERR  4
 #define LOCI_NET_ST_WBUF 5   /* ouvert en écriture, corps en cours d'accumulation */
+#define LOCI_NET_ST_DIAL 6   /* tcp:// : numérotation, attente de CONNECT */
+#define LOCI_NET_ST_STREAM 7 /* tcp:// : connecté, flux brut (avail = octets prêts) */
+#define LOCI_NET_ST_HANGUP 8 /* tcp:// : raccrochage en cours (canal encore tenu) */
 
 /* Ouvre une URL en lecture. `url` commence par « N: » suivi du schéma
  * (`http://`, `https://`). Renvoie 0 si la transaction est armée, -1 sinon
@@ -91,6 +94,15 @@ int __fastcall__ loci_net_open_write(loci_net_t *n, const char *url);
  * d'octets acceptés, -1 sinon (ENOSPC : corps > 2 Ko). */
 int __fastcall__ loci_net_write(loci_net_t *n, unsigned int xaddr,
                                 unsigned int len);
+
+/* Ouvre un flux TCP brut : « N:tcp://hôte:port » (ou « N:telnet://hôte:port »
+ * avec négociation telnet par le dongle). Bidirectionnel : loci_net_read() sert
+ * les octets reçus (bloque tant qu'il n'y en a pas : interroger loci_net_status()
+ * — state STREAM, avail > 0 — avant de lire), loci_net_write() les envoie
+ * aussitôt. La fin distante se voit par read = 0 (trame « NO CARRIER » du modem).
+ * loci_net_close() raccroche en fond (+++ puis ATH, ~2,5 s) : le canal reste
+ * tenu jusque-là (EMFILE à un open trop tôt). Renvoie 0, -1 sinon (errno). */
+int __fastcall__ loci_net_open_tcp(loci_net_t *n, const char *url);
 
 /* Lit l'état de la transaction (code HTTP, avancement, octets disponibles).
  * Renvoie 0 si OK, -1 sinon.
