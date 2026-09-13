@@ -76,6 +76,18 @@ int __fastcall__ loci_net_json(const char *path, char *out, unsigned char cap)
     return r;
 }
 
+int __fastcall__ loci_net_prefix(const char *base)
+{
+    int i;
+    unsigned char n = 0;
+    while (base[n]) ++n;
+    mia_call_void(MIA_OP_ZXSTACK);
+    for (i = n - 1; i >= 0; --i)
+        mia_push_char(base[i]);
+    mia_set_ax(LOCI_NET_PREFIX);
+    return mia_call_int_errno(MIA_OP_NET_CONTROL) < 0 ? -1 : 0;
+}
+
 int __fastcall__ loci_net_time(unsigned long *epoch, char *str, unsigned char set_rtc)
 {
     long r;

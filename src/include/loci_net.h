@@ -45,6 +45,7 @@ typedef struct {
 #define LOCI_NET_STATUS 0x00
 #define LOCI_NET_JSON   0x04
 #define LOCI_NET_TIME   0x05
+#define LOCI_NET_PREFIX 0x03
 
 /* État d'une transaction, tel que le rapporte le firmware. */
 typedef struct {
@@ -112,6 +113,11 @@ int __fastcall__ loci_net_open_tcp(loci_net_t *n, const char *url);
  * nombre/true/false/null tels quels, objet/tableau = texte brut. Renvoie la
  * longueur, -1 sinon (ENOENT : absent ; EINVAL : pas un JSON). Non destructif. */
 int __fastcall__ loci_net_json(const char *path, char *out, unsigned char cap);
+
+/* Base d'URL (« répertoire courant » réseau, façon FujiNet) : ensuite « N:page »
+ * sans schéma ouvre base+page ; une URL complète (« :// ») n'est pas préfixée.
+ * Chaîne vide = efface. Renvoie 0, -1 (EINVAL : > 95 caractères). */
+int __fastcall__ loci_net_prefix(const char *base);
 
 /* Heure du dongle (`AT$TIME?`, NTP côté dongle). Non bloquant : le 1er appel lance la
  * requête et rend 1 ; rappeler jusqu'à 0 (`*epoch` = UTC UNIX 32 bits, `str` =
