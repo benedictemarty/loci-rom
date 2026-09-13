@@ -8,6 +8,7 @@
 #include <loci.h>
 #include <loci_net.h>
 #include <fcntl.h>
+#include <errno.h>
 
 int __fastcall__ loci_net_open(loci_net_t *n, const char *url)
 {
@@ -73,6 +74,26 @@ int __fastcall__ loci_net_json(const char *path, char *out, unsigned char cap)
         out[i] = mia_pop_char();
     out[i] = 0;
     return r;
+}
+
+int __fastcall__ loci_net_time(unsigned long *epoch, char *str, unsigned char set_rtc)
+{
+    long r;
+    unsigned char i;
+    mia_set_ax(LOCI_NET_TIME | ((unsigned int)(set_rtc & 1) << 8));
+    r = mia_call_long_errno(MIA_OP_NET_CONTROL);
+    if (r == -1L) {
+        if (errno == EAGAIN)
+            return 1;                       /* requête en cours : rappeler */
+        return -1;
+    }
+    if (r == 0L)
+        return 1;                           /* requête lancée : rappeler */
+    *epoch = (unsigned long)r;
+    for (i = 0; i < 19; ++i)
+        str[i] = mia_pop_char();
+    str[19] = 0;
+    return 0;
 }
 
 int __fastcall__ loci_net_status(loci_net_status_t *st)

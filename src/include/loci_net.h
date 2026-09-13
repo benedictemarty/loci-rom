@@ -44,6 +44,7 @@ typedef struct {
 /* Sous-fonctions de `MIA_OP_NET_CONTROL` ($B7). */
 #define LOCI_NET_STATUS 0x00
 #define LOCI_NET_JSON   0x04
+#define LOCI_NET_TIME   0x05
 
 /* État d'une transaction, tel que le rapporte le firmware. */
 typedef struct {
@@ -111,6 +112,13 @@ int __fastcall__ loci_net_open_tcp(loci_net_t *n, const char *url);
  * nombre/true/false/null tels quels, objet/tableau = texte brut. Renvoie la
  * longueur, -1 sinon (ENOENT : absent ; EINVAL : pas un JSON). Non destructif. */
 int __fastcall__ loci_net_json(const char *path, char *out, unsigned char cap);
+
+/* Heure du dongle (`AT$TIME?`, NTP côté dongle). Non bloquant : le 1er appel lance la
+ * requête et rend 1 ; rappeler jusqu'à 0 (`*epoch` = UTC UNIX 32 bits, `str` =
+ * « YYYY-MM-DD HH:MM:SS » heure locale du dongle, 20 octets) ; -1 = erreur (errno :
+ * ENODEV sans modem, EMFILE si une transaction N: est en cours, EIO sans réponse).
+ * `set_rtc` ≠ 0 : règle aussi l'horloge temps réel de LOCI (en UTC). */
+int __fastcall__ loci_net_time(unsigned long *epoch, char *str, unsigned char set_rtc);
 
 /* Lit l'état de la transaction (code HTTP, avancement, octets disponibles).
  * Renvoie 0 si OK, -1 sinon.
