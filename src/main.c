@@ -10,6 +10,7 @@
 #include "libsrc/dirent.h"
 #include "persist.h"
 #include "filemanager.h"
+#include "snapshot.h"
 
 extern uint8_t irq_ticks;
 #pragma zpsym ("irq_ticks")
@@ -108,6 +109,7 @@ void do_eject(uint8_t drv, uint8_t ui_idx);
 void DisplayKey(unsigned char key);
 unsigned char Mouse(unsigned char key);
 uint8_t auto_tune_tior(void);
+void map_step(int8_t d);
 void main(void);
 
 tui_widget ui[] = {
@@ -205,7 +207,11 @@ const uint8_t tui_eject_idx[] = {
 };
 
 #define POPUP_FILE_START 8
-tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1] = {
+/* Seules les POPUP_FILE_START premières entrées sont fixes ; les autres sont
+ * (re)remplies par parse_files_to_widget(). Le tableau vit en BSS (pas de queue
+ * de zéros stockée en ROM) et le gabarit constant est copié au démarrage. */
+tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1];
+static const tui_widget popup_tpl[POPUP_FILE_START+1] = {
     { TUI_START, 2, 2, 0, 0 },
     { TUI_BOX,  38,26, 0, 0 },
     { TUI_TXT,   1, 0,25, loci_cfg.path},
@@ -510,6 +516,16 @@ void do_eject(uint8_t drv, uint8_t ui_idx){
     update_eject_btn(drv);
 }
 
+/* Ajuste le délai MAP (rv1) d'un cran, retune et redessine (factorisé : 4 appels) */
+void map_step(int8_t d)
+{
+    if(d > 0 ? rv1 < 31 : rv1 > 0)
+        rv1 += d;
+    rv1 = tune_tmap(rv1);
+    sprintf(txt_rv1, "%02d", rv1);
+    tui_draw_widget(IDX_MAP_RV1);
+}
+
 void DisplayKey(unsigned char key)
 {
     static unsigned char y = 0;
@@ -540,20 +556,13 @@ void DisplayKey(unsigned char key)
                 if(calling_widget == -1){
                     switch(tui_get_current()){
                         case(IDX_DF0):
-                            do_eject(0,IDX_DF0);
-                            tui_toggle_highlight(IDX_DF0);
-                            break;
                         case(IDX_DF1):
-                            do_eject(1,IDX_DF1);
-                            tui_toggle_highlight(IDX_DF1);
-                            break;
                         case(IDX_DF2):
-                            do_eject(2,IDX_DF2);
-                            tui_toggle_highlight(IDX_DF2);
-                            break;
                         case(IDX_DF3):
-                            do_eject(3,IDX_DF3);
-                            tui_toggle_highlight(IDX_DF3);
+                            /* IDX_DFn = IDX_DF0 + 2n (factorisé : ROM pleine) */
+                            idx = tui_get_current();
+                            do_eject((idx-IDX_DF0)>>1,idx);
+                            tui_toggle_highlight(idx);
                             break;
                         case(IDX_TAP):
                             do_eject(4,IDX_TAP);
@@ -622,13 +631,7 @@ void DisplayKey(unsigned char key)
                     case(IDX_MAP_REW):
                     case(IDX_MAP_RV1):
                     case(IDX_MAP_FFW):
-                        if(rv1 < 31) 
-                            rv1++;
-                        //DBG_STATUS("map+");
-                        rv1 = tune_tmap(rv1);
-                        sprintf(txt_rv1, "%02d", rv1);
-                        //DBG_STATUS("    ");
-                        tui_draw_widget(IDX_MAP_RV1);
+                        map_step(1);
                     break;
                 }
             }
@@ -639,13 +642,7 @@ void DisplayKey(unsigned char key)
                     case(IDX_MAP_REW):
                     case(IDX_MAP_RV1):
                     case(IDX_MAP_FFW):
-                        if(rv1 > 0) 
-                            rv1--;
-                        //DBG_STATUS("map-");
-                        rv1 = tune_tmap(rv1);
-                        sprintf(txt_rv1, "%02d", rv1);
-                        //DBG_STATUS("    ");
-                        tui_draw_widget(IDX_MAP_RV1);
+                        map_step(-1);
                     break;
                 }
             }
@@ -730,38 +727,19 @@ void DisplayKey(unsigned char key)
                         boot(false);
                         break;
                     case(IDX_MAP_REW):
-                        if(rv1 > 0) 
-                            rv1--;
-                        //DBG_STATUS("map-");
-                        rv1 = tune_tmap(rv1);
-                        sprintf(txt_rv1, "%02d", rv1);
-                        //DBG_STATUS("    ");
-                        tui_draw_widget(IDX_MAP_RV1);
+                        map_step(-1);
                         break;
                     case(IDX_MAP_FFW):
-                        if(rv1 < 31) 
-                            rv1++;
-                        //DBG_STATUS("map+");
-                        rv1 = tune_tmap(rv1);
-                        sprintf(txt_rv1, "%02d", rv1);
-                        //DBG_STATUS("    ");
-                        tui_draw_widget(IDX_MAP_RV1);
+                        map_step(1);
                         break;
                     case(IDX_EJECT_DF0):
-                        do_eject(0,IDX_DF0);
-                        tui_set_current(IDX_DF0);
-                        break;
                     case(IDX_EJECT_DF1):
-                        do_eject(1,IDX_DF1);
-                        tui_set_current(IDX_DF1);
-                        break;
                     case(IDX_EJECT_DF2):
-                        do_eject(2,IDX_DF2);
-                        tui_set_current(IDX_DF2);
-                        break;
                     case(IDX_EJECT_DF3):
-                        do_eject(3,IDX_DF3);
-                        tui_set_current(IDX_DF3);
+                        /* IDX_EJECT_DFn consécutifs, IDX_DFn = IDX_DF0 + 2n */
+                        idx = tui_get_current() - IDX_EJECT_DF0;
+                        do_eject(idx, IDX_DF0 + (idx<<1));
+                        tui_set_current(IDX_DF0 + (idx<<1));
                         break;
                     case(IDX_EJECT_TAP):
                         do_eject(4,IDX_TAP);
@@ -984,6 +962,19 @@ void DisplayKey(unsigned char key)
                             sprintf(&txt_tior[5],"%02d",auto_tune_tior());
                             tui_draw_widget(IDX_TIOR);
                             break;
+                        case('n'):
+                            /* save-state : écrit l'état gelé dans 0:/LOCI.SNP
+                             * (snapshot_save() refuse s'il n'y a pas de programme gelé) */
+                            DBG_STATUS(snapshot_save()==0 ? "SNAP" : "!SNP");
+                            break;
+                        case('l'):
+                            /* save-state : recharge 0:/LOCI.SNP puis reprend le programme */
+                            if(snapshot_load()==0){
+                                return_possible = true;   /* $B0 a rempli le tampon restore */
+                                boot(true);
+                            }else
+                                DBG_STATUS("!SNP");
+                            break;
                         case('w'):
                             /* loci-webdisk: monte le champ path (URL http://) en
                              * lecteur A. mount() recolle path + '/' + filename,
@@ -1122,6 +1113,7 @@ uint8_t auto_tune_tior(void){
 void main(void){
     uint8_t i;
 
+    memcpy(popup, popup_tpl, sizeof popup_tpl);
     tui_cls(3);
     init_display();
     

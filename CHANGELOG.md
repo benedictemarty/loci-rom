@@ -2,6 +2,23 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/).
 
+## [Non publié] — 2026-09-13 : save-state `$B0` (touches `n`/`l`) — ROM pleine, factorisations
+
+- `src/snapshot.s` (+ `snapshot.h`) : `snapshot_save()` / `snapshot_load()` en **assembleur**
+  (~150 o) : copie la RAM `$2000-$9FFF` vers/depuis le tampon XRAM `$8000` par tranches de 16 Ko
+  (`$03A4`, auto-incrément) entre les appels `$B0` BEGIN/CHUNK/END ; l'E/S fichier
+  (`0:/LOCI.SNP`, en-tête, bloc `restore.s`, `map_flags`) est faite par le firmware. La version C
+  (`read()/write()` cc65) coûtait ~600 o de bibliothèque + 270 o : la ROM 16 Ko est **pleine**.
+- `main.c` : touches **`n`** (snapshot, statut `SNAP`/`!SNP`, exige un programme gelé) et **`l`**
+  (charge puis `boot(true)` = reprise). Avec `CAPS` actif par défaut dans le menu, ces raccourcis
+  (comme `a`…`w`) se tapent avec Shift.
+- Place gagnée pour que ça tienne (0 octet de marge, `STARTUP` finit en `$FFEE`) : `popup[]`
+  passe en BSS avec un gabarit constant de 9 entrées (la queue de 24 entrées nulles n'est plus
+  stockée en ROM : −144 o), `map_step()` factorise 4 blocs `rv1±1`/`tune_tmap`/`sprintf`,
+  éjection des lecteurs A-D factorisée (`IDX_DFn = IDX_DF0 + 2n`, `IDX_EJECT_DFn` consécutifs).
+- Validé en co-simulation Phosphoric : gel → `n` → boot à froid → autre programme → gel → `l` →
+  reprise du 1ᵉʳ programme ; idem depuis une session neuve (flash persistée).
+
 ## [Non publié] — 2026-09-13 : façade `loci_fs` (fs-posix) + `mkdir` corrigé
 
 - `include/loci_fs.h` + `libsrc/loci_fs.c` : `loci_stat` (structure identique à `f_stat_t` de

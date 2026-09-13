@@ -6,7 +6,7 @@ export CC65_HOME = /usr/share/cc65
 endif
 
 SOURCES = main.c tui.c persist.c filemanager.c
-ASOURCES = display.s keyboard.s irq.s timings.s vectors.s versions.s tui_asm.s
+ASOURCES = display.s keyboard.s irq.s timings.s vectors.s versions.s tui_asm.s snapshot.s
 
 LSOURCES = $(wildcard libsrc/*.c)
 LASOURCES = $(wildcard libsrc/*.s)
