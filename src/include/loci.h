@@ -171,6 +171,7 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_STAT 0x1F        /* fs-posix : taille + attributs (voir loci_fs.h) */
 #define MIA_OP_CHDIR 0x84       /* fs-posix : repertoire courant (+ volume courant) */
 #define MIA_OP_GETFREE 0x85     /* fs-posix : espace libre du volume */
+#define MIA_OP_RAMX 0xAF        /* expansion RAM paginee (voir loci_ramx.h) */
 #define MIA_OP_STREAM_BANK 0xA8 /* streamer read-only fichier -> banque 16 Ko (voir loci_stream.h) */
 #define MIA_OP_NET_CONTROL 0xB7 /* device reseau N: : etat d'une transaction (voir loci_net.h) */
 
